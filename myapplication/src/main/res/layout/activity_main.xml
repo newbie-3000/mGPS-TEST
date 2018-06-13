@@ -108,6 +108,8 @@
         </LinearLayout>
 
 
+
+
     </LinearLayout>
 
     <LinearLayout
@@ -131,33 +133,68 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="定位卫星颗数:" />
+
+            <TextView
+                android:id="@+id/tv_weixingcount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
 
     </LinearLayout>
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/log"
-            android:layout_width="match_parent"
+
+        <ScrollView
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:padding="10dp" />
-    </ScrollView>
+            android:layout_weight="1">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center">
+            <TextView
+                android:id="@+id/log"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp" />
+        </ScrollView>
 
-        <Button
-            android:id="@+id/btn_clear_log"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="清空日志"
-            android:textColor="@android:color/darker_gray" />
+        <!--<LinearLayout-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="1"-->
+            <!--android:orientation="vertical">-->
+
+            <!--<TextView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="1方位 2高度 3伪随机噪声码 4信噪比 5是否有年历表 6是否有星历表 7是否被用于近期的GPS修正计算" />-->
+
+            <!--<ScrollView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="0dp"-->
+                <!--android:layout_weight="1">-->
+                <!--<TextView-->
+                    <!--android:id="@+id/tv_weixing_info"-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--android:layout_height="match_parent"-->
+                    <!--android:padding="10dp" />-->
+            <!--</ScrollView>-->
+        <!--</LinearLayout>-->
+
     </LinearLayout>
+
 
 
 </LinearLayout>

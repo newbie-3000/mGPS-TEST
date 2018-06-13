@@ -20,11 +20,13 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,7 +48,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private TextView tvTime;
     private TextView tvGpsStatus;
     private TextView log;
-    private Button btn_clear_log;
+    private TextView tvWeixingcount;
+
+
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Date date;
 
 
     @Override
@@ -62,14 +68,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         tvSudu = findViewById(R.id.tv_sudu);
         tvTime = findViewById(R.id.tv_time);
         log = findViewById(R.id.log);
-        btn_clear_log = findViewById(R.id.btn_clear_log);
-        btn_clear_log.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
+        tvWeixingcount = findViewById(R.id.tv_weixingcount);
         tvGpsStatus = findViewById(R.id.tv_gps_status);
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -112,12 +113,21 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         // 1秒更新一次，或最小位移变化超过1米更新一次；
         // 注意：此处更新准确度非常低，推荐在service里面启动一个Thread，在run中sleep(10000);然后执行handler.sendMessage(),更新位置
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 100, locationListener);
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationManager.removeUpdates(locationListener);
+        locationManager.removeGpsStatusListener(listener);
+        locationManager= null;
+        tvWeixingcount=null;
+    }
+
     private void printfLog(String str) {
-        if(log.getLineCount() >= 25)
+        if (log.getLineCount() >= 25)
             log.setText("");
         log.append(str);
         log.append("\r\n");
@@ -136,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 // 卫星状态改变
                 case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
                     Log.i(TAG, "卫星状态改变");
-                    printfLog("卫星状态改变");
+//                    printfLog("卫星状态改变");
                     // 获取当前状态
                     @SuppressLint("MissingPermission")
                     GpsStatus gpsStatus = locationManager.getGpsStatus(null);
@@ -145,13 +155,35 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     // 创建一个迭代器保存所有卫星
                     Iterator<GpsSatellite> iters = gpsStatus.getSatellites()
                             .iterator();
+                    //通过遍历重新整理为ArrayList
+                    ArrayList<GpsSatellite> satelliteList = new ArrayList<GpsSatellite>();
                     int count = 0;
                     while (iters.hasNext() && count <= maxSatellites) {
                         GpsSatellite s = iters.next();
+                        satelliteList.add(s);
                         count++;
                     }
                     Log.i(TAG, "搜索到：" + count + "颗卫星");
-                    printfLog("搜索到：" + count + "颗卫星");
+                    tvWeixingcount.setText(count + "");
+//                    printfLog("搜索到：" + count + "颗卫星");
+//                    tvWeixingInfo.setText("");
+
+                    for (int i = 0; i < satelliteList.size(); i++) {
+                        //卫星的方位角，浮点型数据
+                        Log.i(TAG, "卫星方位:" + satelliteList.get(i).getAzimuth());
+                        //卫星的高度，浮点型数据
+                        Log.i(TAG, "卫星高度:" + satelliteList.get(i).getElevation());
+                        //卫星的伪随机噪声码，整形数据
+                        Log.i(TAG, "卫星伪随机噪声码:" + satelliteList.get(i).getPrn());
+                        //卫星的信噪比，浮点型数据
+                        Log.i(TAG, "卫星信噪比:" + satelliteList.get(i).getSnr());
+                        //卫星是否有年历表，布尔型数据
+                        Log.i(TAG, "卫星是否有年历表:" + satelliteList.get(i).hasAlmanac());
+                        //卫星是否有星历表，布尔型数据
+                        Log.i(TAG, "卫星是否有星历表:" + satelliteList.get(i).hasEphemeris());
+                        //卫星是否被用于近期的GPS修正计算
+                        Log.i(TAG, "卫星是否被用于近期的GPS修正计算:" + satelliteList.get(i).hasAlmanac());
+                    }
                     break;
                 // 定位启动
                 case GpsStatus.GPS_EVENT_STARTED:
@@ -193,13 +225,23 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     private void updateView(Location location) {
         if (location != null) {
-            tvJingdu.setText(String.valueOf(location.getLatitude()));
-            tvWeidu.setText(String.valueOf(location.getLongitude()));
+            tvJingdu.setText(String.valueOf(location.getLongitude()));
+            tvWeidu.setText(String.valueOf(location.getLatitude()));
             tvHaiba.setText(String.valueOf(location.getAltitude()));
             tvSudu.setText(String.valueOf(location.getSpeed()));
-            tvTime.setText(String.valueOf(location.getTime()));
+            date = new Date(location.getTime());
+            tvTime.setText(simpleDateFormat.format(date));
         }
 
+    }
+
+
+    public static String getFormatHMS(long time) {
+        time = time / 1000;//总秒数
+        int s = (int) (time % 60);//秒
+        int m = (int) (time / 60);//分
+        int h = (int) (time / 3600);//秒
+        return String.format("%02d:%02d:%02d", h, m, s);
     }
 
     private LocationListener locationListener = new LocationListener() {
@@ -215,6 +257,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             printfLog("经度：" + location.getLongitude());
             printfLog("纬度：" + location.getLatitude());
             printfLog("海拔：" + location.getAltitude());
+            Toast.makeText(getApplicationContext(), "GPS定位结果发生改变", Toast.LENGTH_SHORT).show();
 
 
         }
@@ -223,16 +266,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onStatusChanged(String provider, int status, Bundle extras) {
             switch (status) {
                 case LocationProvider.AVAILABLE:
+                    tvGpsStatus.setText("当前GPS状态为可见状态");
                     Log.i(TAG, "当前GPS状态为可见状态");
                     printfLog("当前GPS状态为可见状态");
                     break;
                 //GPS状态为服务区外时
                 case LocationProvider.OUT_OF_SERVICE:
+                    tvGpsStatus.setText("当前GPS状态为服务区外状态");
                     Log.i(TAG, "当前GPS状态为服务区外状态");
                     printfLog("当前GPS状态为服务区外状态");
                     break;
                 //GPS状态为暂停服务时
                 case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                    tvGpsStatus.setText("当前GPS状态为暂停服务状态");
                     Log.i(TAG, "当前GPS状态为暂停服务状态");
                     printfLog("当前GPS状态为暂停服务状态");
                     break;
